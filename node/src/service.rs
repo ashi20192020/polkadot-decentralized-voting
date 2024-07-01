@@ -1,7 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use futures::FutureExt;
-use node_template_runtime::{self, opaque::Block, RuntimeApi};
+use polkadot_dectralized_voing_runtime::{self, opaque::Block, RuntimeApi};
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
@@ -164,6 +164,8 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 			warp_sync_params: Some(WarpSyncParams::WithProvider(warp_sync)),
 			block_relay: None,
 		})?;
+	let keystore = keystore_container.keystore();
+
 
 	if config.offchain_worker.enabled {
 		task_manager.spawn_handle().spawn(
@@ -184,6 +186,12 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 			.run(client.clone(), task_manager.spawn_handle())
 			.boxed(),
 		);
+		sp_keystore::Keystore::sr25519_generate_new(
+			&*keystore,
+			polkadot_dectralized_voing_runtime::pallet_proposals::KEY_TYPE,
+			Some("//Alice"),
+		).expect("Creating key with account Alice should succeed.");
+
 	}
 
 	let role = config.role.clone();
